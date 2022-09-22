@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
 
 	t "time"
 
-	"github.com/NaddiNadja/grpc101/time"
+	"github.com/Lukski175/grpc101/time"
 
 	"google.golang.org/grpc"
 )
@@ -40,6 +42,8 @@ func SendGetTimeRequest(c time.GetCurrentTimeClient) {
 	if err != nil {
 		log.Fatalf("Error when calling GetTime: %s", err)
 	}
-
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 	fmt.Printf("Current time right now: %s\n", response.Reply)
 }

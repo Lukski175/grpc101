@@ -2,35 +2,48 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"log"
-	"net"
-	t "time"
+	"time"
 
-	"github.com/NaddiNadja/grpc101/time"
+	pb "github.com/Lukski175/grpc101/time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Server struct {
-	time.UnimplementedGetCurrentTimeServer
 }
 
-func (s *Server) GetTime(ctx context.Context, in *time.GetTimeRequest) (*time.GetTimeReply, error) {
-	fmt.Printf("Received GetTime request\n")
-	return &time.GetTimeReply{Reply: t.Now().String()}, nil
+func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
+
+const (
+	defaultName = "server"
+)
+
+var (
+	addr = flag.String("addr", "localhost:50051", "the address to connect to")
+	name = flag.String("name", defaultName, "Name to greet")
+)
 
 func main() {
-	// Create listener tcp on port 9080
-	list, err := net.Listen("tcp", ":9080")
+	flag.Parse()
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to listen on port 9080: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
-	grpcServer := grpc.NewServer()
-	time.RegisterGetCurrentTimeServer(grpcServer, &Server{})
+	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
 
-	if err := grpcServer.Serve(list); err != nil {
-		log.Fatalf("failed to server %v", err)
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
 	}
+	log.Printf("Greeting: %s", r.GetMessage())
 }

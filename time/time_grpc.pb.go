@@ -14,86 +14,86 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// GetCurrentTimeClient is the client API for GetCurrentTime service.
+// GreeterClient is the client API for Greeter service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type GetCurrentTimeClient interface {
-	GetTime(ctx context.Context, in *GetTimeRequest, opts ...grpc.CallOption) (*GetTimeReply, error)
+type GreeterClient interface {
+	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
 }
 
-type getCurrentTimeClient struct {
+type greeterClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGetCurrentTimeClient(cc grpc.ClientConnInterface) GetCurrentTimeClient {
-	return &getCurrentTimeClient{cc}
+func NewGreeterClient(cc grpc.ClientConnInterface) GreeterClient {
+	return &greeterClient{cc}
 }
 
-func (c *getCurrentTimeClient) GetTime(ctx context.Context, in *GetTimeRequest, opts ...grpc.CallOption) (*GetTimeReply, error) {
-	out := new(GetTimeReply)
-	err := c.cc.Invoke(ctx, "/time.getCurrentTime/getTime", in, out, opts...)
+func (c *greeterClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
+	out := new(HelloReply)
+	err := c.cc.Invoke(ctx, "/time.Greeter/SayHello", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GetCurrentTimeServer is the server API for GetCurrentTime service.
-// All implementations must embed UnimplementedGetCurrentTimeServer
+// GreeterServer is the server API for Greeter service.
+// All implementations must embed UnimplementedGreeterServer
 // for forward compatibility
-type GetCurrentTimeServer interface {
-	GetTime(context.Context, *GetTimeRequest) (*GetTimeReply, error)
-	mustEmbedUnimplementedGetCurrentTimeServer()
+type GreeterServer interface {
+	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
+	mustEmbedUnimplementedGreeterServer()
 }
 
-// UnimplementedGetCurrentTimeServer must be embedded to have forward compatible implementations.
-type UnimplementedGetCurrentTimeServer struct {
+// UnimplementedGreeterServer must be embedded to have forward compatible implementations.
+type UnimplementedGreeterServer struct {
 }
 
-func (UnimplementedGetCurrentTimeServer) GetTime(context.Context, *GetTimeRequest) (*GetTimeReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTime not implemented")
+func (UnimplementedGreeterServer) SayHello(context.Context, *HelloRequest) (*HelloReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
 }
-func (UnimplementedGetCurrentTimeServer) mustEmbedUnimplementedGetCurrentTimeServer() {}
+func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
 
-// UnsafeGetCurrentTimeServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GetCurrentTimeServer will
+// UnsafeGreeterServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GreeterServer will
 // result in compilation errors.
-type UnsafeGetCurrentTimeServer interface {
-	mustEmbedUnimplementedGetCurrentTimeServer()
+type UnsafeGreeterServer interface {
+	mustEmbedUnimplementedGreeterServer()
 }
 
-func RegisterGetCurrentTimeServer(s grpc.ServiceRegistrar, srv GetCurrentTimeServer) {
-	s.RegisterService(&GetCurrentTime_ServiceDesc, srv)
+func RegisterGreeterServer(s grpc.ServiceRegistrar, srv GreeterServer) {
+	s.RegisterService(&Greeter_ServiceDesc, srv)
 }
 
-func _GetCurrentTime_GetTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTimeRequest)
+func _Greeter_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HelloRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GetCurrentTimeServer).GetTime(ctx, in)
+		return srv.(GreeterServer).SayHello(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/time.getCurrentTime/getTime",
+		FullMethod: "/time.Greeter/SayHello",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GetCurrentTimeServer).GetTime(ctx, req.(*GetTimeRequest))
+		return srv.(GreeterServer).SayHello(ctx, req.(*HelloRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// GetCurrentTime_ServiceDesc is the grpc.ServiceDesc for GetCurrentTime service.
+// Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var GetCurrentTime_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "time.getCurrentTime",
-	HandlerType: (*GetCurrentTimeServer)(nil),
+var Greeter_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "time.Greeter",
+	HandlerType: (*GreeterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "getTime",
-			Handler:    _GetCurrentTime_GetTime_Handler,
+			MethodName: "SayHello",
+			Handler:    _Greeter_SayHello_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

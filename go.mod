@@ -1,4 +1,4 @@
-module github.com/NaddiNadja/grpc101
+module github.com/Lukski175/grpc101
 
 go 1.17
 
