@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type GreeterClient interface {
 	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
 	ReceiveMessages(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*MessageReply, error)
+	SendMessages(ctx context.Context, in *MessageAmount, opts ...grpc.CallOption) (*MessageReply, error)
 }
 
 type greeterClient struct {
@@ -48,12 +49,22 @@ func (c *greeterClient) ReceiveMessages(ctx context.Context, in *MessageRequest,
 	return out, nil
 }
 
+func (c *greeterClient) SendMessages(ctx context.Context, in *MessageAmount, opts ...grpc.CallOption) (*MessageReply, error) {
+	out := new(MessageReply)
+	err := c.cc.Invoke(ctx, "/time.Greeter/SendMessages", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GreeterServer is the server API for Greeter service.
 // All implementations must embed UnimplementedGreeterServer
 // for forward compatibility
 type GreeterServer interface {
 	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
 	ReceiveMessages(context.Context, *MessageRequest) (*MessageReply, error)
+	SendMessages(context.Context, *MessageAmount) (*MessageReply, error)
 	mustEmbedUnimplementedGreeterServer()
 }
 
@@ -66,6 +77,9 @@ func (UnimplementedGreeterServer) SayHello(context.Context, *HelloRequest) (*Hel
 }
 func (UnimplementedGreeterServer) ReceiveMessages(context.Context, *MessageRequest) (*MessageReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReceiveMessages not implemented")
+}
+func (UnimplementedGreeterServer) SendMessages(context.Context, *MessageAmount) (*MessageReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendMessages not implemented")
 }
 func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
 
@@ -116,6 +130,24 @@ func _Greeter_ReceiveMessages_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Greeter_SendMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MessageAmount)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServer).SendMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/time.Greeter/SendMessages",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServer).SendMessages(ctx, req.(*MessageAmount))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +162,10 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReceiveMessages",
 			Handler:    _Greeter_ReceiveMessages_Handler,
+		},
+		{
+			MethodName: "SendMessages",
+			Handler:    _Greeter_SendMessages_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

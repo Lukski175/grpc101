@@ -61,15 +61,11 @@ func main() {
 	}
 }
 
-func Chat() {
+func Chat(c *pb.GreeterClient) {
 	for {
-		scan := bufio.NewScanner(os.Stdin)
-		scan.Scan()
-		input := scan.Text()
-
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		r, err := c.SendMessages(ctx, &pb.MessageAmount{Message: input})
+		r, err := c.SendMessages(ctx, &pb.MessageAmount{amount: 10})
 		if err != nil {
 			log.Fatalf("could not greet: %v", err)
 		}

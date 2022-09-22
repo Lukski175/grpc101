@@ -50,7 +50,7 @@ func (s *server) ReceiveMessages(ctx context.Context, in *pb.MessageRequest) (*p
 	return &pb.MessageReply{Messages: nil}, nil
 }
 
-func (s *server) SendMessages(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
+func (s *server) SendMessages(ctx context.Context, in *pb.MessageAmount) (*pb.MessageReply, error) {
 	var temp []string
 	for i := len(stack); i > 0 && i > len(stack)-5; i-- {
 		temp = append(temp, stack[i])

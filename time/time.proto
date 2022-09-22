@@ -27,5 +27,5 @@ message MessageReply {
 }
 
 message MessageAmount {
-    int amount = 1;
+    int32 amount = 1;
 }
