@@ -46,9 +46,14 @@ func main() {
 
 func (s *server) ReceiveMessages(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
 	stack = append(stack, in.Message)
+	log.Printf("Received message: %v", in.GetMessage())
+	return &pb.MessageReply{Messages: nil}, nil
+}
+
+func (s *server) SendMessages(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
 	var temp []string
 	for i := len(stack); i > 0 && i > len(stack)-5; i-- {
 		temp = append(temp, stack[i])
 	}
-	return &pb.MessageReply{Messages: nil}, nil
+	return &pb.MessageReply{Messages: temp}, nil
 }

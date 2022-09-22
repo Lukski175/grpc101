@@ -15,13 +15,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type Server struct {
-}
-
-func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	return &pb.HelloReply{Reply: "Hello " + in.GetName()}, nil
-}
-
 var (
 	addr = flag.String("addr", "localhost:50051", "the address to connect to")
 	name = flag.String("name", "something", "Name to greet")
@@ -52,14 +45,34 @@ func main() {
 	}
 	log.Printf("Greeting: %s", r.GetReply())
 
+	go Chat()
+
 	for {
 		scan := bufio.NewScanner(os.Stdin)
 		scan.Scan()
 		input := scan.Text()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
 		_, err := c.ReceiveMessages(ctx, &pb.MessageRequest{Message: input})
 		if err != nil {
 			log.Fatalf("could not greet: %v", err)
 		}
-		log.Printf("Server got message")
+	}
+}
+
+func Chat() {
+	for {
+		scan := bufio.NewScanner(os.Stdin)
+		scan.Scan()
+		input := scan.Text()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		r, err := c.SendMessages(ctx, &pb.MessageAmount{Message: input})
+		if err != nil {
+			log.Fatalf("could not greet: %v", err)
+		}
+		_ = r.GetReply()
 	}
 }
