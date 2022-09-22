@@ -8,6 +8,7 @@ service Greeter {
     rpc SayHello (HelloRequest) returns (HelloReply) {}
     rpc ReceiveMessages (MessageRequest) returns (MessageReply) {}
     rpc SendMessages (MessageAmount) returns (MessageReply) {}
+    rpc Chat (MessageReply) returns (HelloRequest) {}
 }
 
 message HelloRequest {
@@ -16,14 +17,20 @@ message HelloRequest {
 
 message HelloReply {
     string reply = 1;
+    int32 port = 2;
 }
 
 message MessageRequest {
-    string message = 1;
+    ClientMessage message = 1;
+}
+
+message ClientMessage {
+    string name = 1;
+    string message = 2;
 }
 
 message MessageReply {
-    repeated string messages = 1;
+    repeated ClientMessage messages = 1;
 }
 
 message MessageAmount {

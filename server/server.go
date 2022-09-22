@@ -6,54 +6,95 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+	"time"
 
 	pb "github.com/Lukski175/grpc101/time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-var (
-	port = flag.Int("port", 50051, "The server port")
-)
+func portMethod() (port *int) {
+	return flag.Int("port", porten, "The server port")
+}
 
-var stack []string
+var messages []*pb.ClientMessage
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
 	pb.UnimplementedGreeterServer
 }
 
+var porten int
+
+func tupleMethod() (addr *string, name *string) {
+	return flag.String("addr", "localhost:"+strconv.Itoa(porten), "the address to connect to"),
+		flag.String("name", "something", "Name to greet")
+}
+
 // SayHello implements helloworld.GreeterServer
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	log.Printf("Received: %v", in.GetName())
-	return &pb.HelloReply{Reply: "Hello " + in.GetName()}, nil
+	return &pb.HelloReply{Reply: "Hello " + in.GetName(), Port: int32(porten)}, nil
 }
 
+var gs pb.GreeterServer
+var gc pb.GreeterClient
+
 func main() {
+	porten = 50051
+	//Setup this server for client input
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *portMethod()))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
+
+	//Setup server connection to client, so server can send messages
+	address, _ := tupleMethod()
+	conn, err := grpc.Dial(*address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	porten++
+	gc = pb.NewGreeterClient(conn)
 
 	pb.RegisterGreeterServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+
 }
 
 func (s *server) ReceiveMessages(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
-	stack = append(stack, in.Message)
+	messages = append(messages, in.GetMessage())
 	log.Printf("Received message: %v", in.GetMessage())
+	SendMessages()
 	return &pb.MessageReply{Messages: nil}, nil
 }
 
-func (s *server) SendMessages(ctx context.Context, in *pb.MessageAmount) (*pb.MessageReply, error) {
-	var temp []string
-	for i := len(stack); i > 0 && i > len(stack)-5; i-- {
-		temp = append(temp, stack[i])
+func ServerSetup() {
+	//Setup server connection to client, so server can send messages
+	address, _ := tupleMethod()
+	conn, err := grpc.Dial(*address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
 	}
-	return &pb.MessageReply{Messages: temp}, nil
+	defer conn.Close()
+	gc = pb.NewGreeterClient(conn)
+}
+
+func SendMessages() {
+	//log.Print("Sending:", elem)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	_, err := gc.Chat(ctx, &pb.MessageReply{Messages: messages})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
 }
