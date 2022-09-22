@@ -23,12 +23,13 @@ var messages []*pb.ClientMessage
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
-	pb.UnimplementedGreeterServer
+	pb.GreeterServer
 }
 
 var porten int
 
 func tupleMethod() (addr *string, name *string) {
+	fmt.Printf(strconv.Itoa(porten))
 	return flag.String("addr", "localhost:"+strconv.Itoa(porten), "the address to connect to"),
 		flag.String("name", "something", "Name to greet")
 }
@@ -36,6 +37,8 @@ func tupleMethod() (addr *string, name *string) {
 // SayHello implements helloworld.GreeterServer
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	log.Printf("Received: %v", in.GetName())
+	porten++
+	go ServerSetup()
 	return &pb.HelloReply{Reply: "Hello " + in.GetName(), Port: int32(porten)}, nil
 }
 
@@ -52,22 +55,12 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	//Setup server connection to client, so server can send messages
-	address, _ := tupleMethod()
-	conn, err := grpc.Dial(*address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer conn.Close()
-	porten++
-	gc = pb.NewGreeterClient(conn)
-
 	pb.RegisterGreeterServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-
+	porten++
 }
 
 func (s *server) ReceiveMessages(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {

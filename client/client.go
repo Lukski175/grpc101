@@ -27,7 +27,7 @@ func tupleMethod() (addr *string, name *string) {
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
-	pb.UnimplementedGreeterServer
+	pb.GreeterServer
 }
 
 func portMethod() (port *int) {
@@ -58,7 +58,7 @@ func main() {
 	defer cancel()
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
 	if err != nil {
-		porten++
+		log.Fatalf("failed to listen: %v", err)
 	}
 	log.Printf("Greeting: %s", r.GetReply())
 	porten = int(r.GetPort())
