@@ -1,49 +1,65 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
+	"time"
 
-	t "time"
-
-	"github.com/Lukski175/grpc101/time"
+	pb "github.com/Lukski175/grpc101/time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+type Server struct {
+}
+
+func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Reply: "Hello " + in.GetName()}, nil
+}
+
+var (
+	addr = flag.String("addr", "localhost:50051", "the address to connect to")
+	name = flag.String("name", "something", "Name to greet")
 )
 
 func main() {
-	// Creat a virtual RPC Client Connection on port  9080 WithInsecure (because  of http)
-	var conn *grpc.ClientConn
-	conn, err := grpc.Dial(":9080", grpc.WithInsecure())
+	flag.Parse()
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Could not connect: %s", err)
+		log.Fatalf("did not connect: %v", err)
 	}
-
-	// Defer means: When this function returns, call this method (meaing, one main is done, close connection)
 	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
 
-	//  Create new Client from generated gRPC code from proto
-	c := time.NewGetCurrentTimeClient(conn)
+	fmt.Print("Enter client name:")
+	scan := bufio.NewScanner(os.Stdin)
+	scan.Scan()
+	input := scan.Text()
+	name = &input
+
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("Greeting: %s", r.GetReply())
 
 	for {
-		SendGetTimeRequest(c)
-		t.Sleep(5 * t.Second)
+		scan := bufio.NewScanner(os.Stdin)
+		scan.Scan()
+		input := scan.Text()
+		r, err := c.ReceiveMessages(ctx, &pb.MessageRequest{Message: input})
+		if err != nil {
+			log.Fatalf("could not greet: %v", err)
+		}
+		log.Printf("Server got message")
 	}
-}
-
-func SendGetTimeRequest(c time.GetCurrentTimeClient) {
-	// Between the curly brackets are nothing, because the .proto file expects no input.
-	message := time.GetTimeRequest{}
-
-	response, err := c.GetTime(context.Background(), &message)
-	if err != nil {
-		log.Fatalf("Error when calling GetTime: %s", err)
-	}
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-	fmt.Printf("Current time right now: %s\n", response.Reply)
 }
