@@ -6,6 +6,7 @@ option go_package = "https://github.com/Lukski175/grpc101;time";
 
 service Greeter {
     rpc SayHello (HelloRequest) returns (HelloReply) {}
+    rpc ReceiveMessages (MessageRequest) returns (MessageReply) {}
 }
 
 message HelloRequest {

@@ -56,7 +56,7 @@ func main() {
 		scan := bufio.NewScanner(os.Stdin)
 		scan.Scan()
 		input := scan.Text()
-		r, err := c.ReceiveMessages(ctx, &pb.MessageRequest{Message: input})
+		_, err := c.ReceiveMessages(ctx, &pb.MessageRequest{Message: input})
 		if err != nil {
 			log.Fatalf("could not greet: %v", err)
 		}

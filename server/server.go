@@ -44,11 +44,11 @@ func main() {
 	}
 }
 
-func (s *server) ReceiveMessages(ctx context.Context, in *pb.MessageRequest) error {
+func (s *server) ReceiveMessages(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
 	stack = append(stack, in.Message)
 	var temp []string
 	for i := len(stack); i > 0 && i > len(stack)-5; i-- {
 		temp = append(temp, stack[i])
 	}
-	return nil
+	return &pb.MessageReply{Messages: nil}, nil
 }
